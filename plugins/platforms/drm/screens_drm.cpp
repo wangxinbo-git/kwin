@@ -28,8 +28,8 @@ DrmScreens::DrmScreens(DrmBackend *backend, QObject *parent)
     : OutputScreens(backend, parent)
     , m_backend(backend)
 {
-    connect(backend, &DrmBackend::screensQueried, this, &DrmScreens::updateCount);
-    connect(backend, &DrmBackend::screensQueried, this, &DrmScreens::changed);
+    connect(backend, &DrmBackend::screensQueried, this, &DrmScreens::updateCount, Qt::DirectConnection);
+    connect(backend, &DrmBackend::screensQueried, this, &DrmScreens::changed, Qt::DirectConnection);
 }
 
 DrmScreens::~DrmScreens() = default;
