@@ -15,6 +15,7 @@
 #include <KDecoration2/DecorationSettings>
 #include <QFileSystemWatcher>
 #include <QPalette>
+#include <KSharedConfig>
 
 namespace KWin
 {
@@ -40,17 +41,9 @@ private:
     QString m_colorScheme;
     QFileSystemWatcher m_watcher;
 
+    KSharedConfig::Ptr m_colorSchemeConfig;
+
     QPalette m_palette;
-
-    QColor m_activeTitleBarColor;
-    QColor m_inactiveTitleBarColor;
-
-    QColor m_activeFrameColor;
-    QColor m_inactiveFrameColor;
-
-    QColor m_activeForegroundColor;
-    QColor m_inactiveForegroundColor;
-    QColor m_warningForegroundColor;
 };
 
 }
