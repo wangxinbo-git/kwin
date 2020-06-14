@@ -1847,9 +1847,8 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
         [this] () {
             if (!frameGeometry().isEmpty()) {
                 GeometryUpdatesBlocker blocker(this);
-                const QRect area = workspace()->clientArea(PlacementArea, Screens::self()->current(), desktop());
-                Placement::self()->place(this, area);
-                setGeometryRestore(frameGeometry());
+                Placement::self()->place(this, frameGeometry());
+                m_shellSurface->sendConfigure(frameGeometry());
             }
         }
     );
@@ -1864,6 +1863,21 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
     AbstractClient *parentClient = waylandServer()->findClient(parentShellSurface->surface());
     parentClient->addTransient(this);
     setTransientFor(parentClient);
+}
+
+bool XdgPopupClient::followsParent() const
+{
+    return m_shellSurface->positioner().reactive();
+}
+
+quint32 XdgPopupClient::followsParentSerial() const
+{
+    return m_shellSurface->positioner().parentConfigure();
+}
+
+QSize XdgPopupClient::followsParentSize() const
+{
+    return m_shellSurface->positioner().parentSize();
 }
 
 XdgPopupClient::~XdgPopupClient()
