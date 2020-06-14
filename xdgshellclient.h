@@ -265,6 +265,9 @@ public:
     bool takeFocus() override;
     bool supportsWindowRules() const override;
     void installPlasmaShellSurface(KWaylandServer::PlasmaShellSurfaceInterface *shellSurface) override;
+    bool followsParent() const;
+    QSize followsParentSize() const;
+    quint32 followsParentSerial() const;
 
 Q_SIGNALS:
     /**
