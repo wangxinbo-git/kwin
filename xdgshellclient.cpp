@@ -113,6 +113,36 @@ XdgSurfaceClient::XdgSurfaceClient(XdgSurfaceInterface *shellSurface)
 
     connect(this, &XdgSurfaceClient::frameGeometryChanged,
             this, &XdgSurfaceClient::updateGeometryRestoreHack);
+    connect(this, &XdgSurfaceClient::frameGeometryChanged,
+            this, &XdgSurfaceClient::handleBoundPopups);
+}
+
+void XdgSurfaceClient::handleBoundPopups()
+{
+    auto popups = m_boundPopups;
+    QList<QPointer<XdgPopupClient>> used;
+    for (auto popup : popups) {
+        if (used.contains(popup)) {
+            continue;
+        } else {
+            used << popup;
+        }
+        if (popup == nullptr) {
+            m_boundPopups.removeAll(popup);
+            continue;
+        }
+        popup->relayout();
+    }
+}
+
+void XdgSurfaceClient::bindPopup(XdgPopupClient* client)
+{
+    m_boundPopups << client;
+}
+
+void XdgSurfaceClient::unbindPopup(XdgPopupClient* client)
+{
+    m_boundPopups.removeAll(client);
 }
 
 XdgSurfaceClient::~XdgSurfaceClient()
@@ -1850,12 +1880,31 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
     AbstractClient *parentClient = waylandServer()->findClient(parentShellSurface->surface());
     parentClient->addTransient(this);
     setTransientFor(parentClient);
+    handlePositionerBindings();
+}
+
+void XdgPopupClient::handlePositionerBindings()
+{
+    auto parent = qobject_cast<XdgSurfaceClient*>(transientFor());
+    if (parent) {
+        if (m_shellSurface->positioner().reactive()) {
+            parent->bindPopup(this);
+        } else {
+            parent->unbindPopup(this);
+        }
+    }
 }
 
 void XdgPopupClient::reposition(XdgPositioner positioner, quint32 token)
 {
     m_shellSurface->setPositioner(positioner);
+    handlePositionerBindings();
     m_shellSurface->sendPopupRepositioned(token);
+    relayout();
+}
+
+void XdgPopupClient::relayout()
+{
     if (!frameGeometry().isEmpty()) {
         GeometryUpdatesBlocker blocker(this);
         Placement::self()->place(this, frameGeometry());
