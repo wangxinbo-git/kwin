@@ -1827,20 +1827,7 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
     connect(shellSurface, &XdgPopupInterface::initializeRequested,
             this, &XdgPopupClient::initialize);
     connect(shellSurface, &XdgPopupInterface::popupRepositionRequested,
-            [=](XdgPositioner positioner, quint32 token) {
-                m_shellSurface->setPositioner(positioner);
-                m_shellSurface->sendPopupRepositioned(token);
-                Q_EMIT repositioned();
-            });
-    connect(this, &XdgPopupClient::repositioned, this,
-        [this] () {
-            if (!frameGeometry().isEmpty()) {
-                GeometryUpdatesBlocker blocker(this);
-                Placement::self()->place(this, frameGeometry());
-                m_shellSurface->sendConfigure(frameGeometry());
-            }
-        }
-    );
+            this, &XdgPopupClient::reposition);
     connect(shellSurface, &XdgPopupInterface::destroyed,
             this, &XdgPopupClient::destroyClient);
 
@@ -1852,6 +1839,17 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
     AbstractClient *parentClient = waylandServer()->findClient(parentShellSurface->surface());
     parentClient->addTransient(this);
     setTransientFor(parentClient);
+}
+
+void XdgPopupClient::reposition(XdgPositioner positioner, quint32 token)
+{
+    m_shellSurface->setPositioner(positioner);
+    m_shellSurface->sendPopupRepositioned(token);
+    if (!frameGeometry().isEmpty()) {
+        GeometryUpdatesBlocker blocker(this);
+        Placement::self()->place(this, frameGeometry());
+        m_shellSurface->sendConfigure(frameGeometry());
+    }
 }
 
 bool XdgPopupClient::followsParent() const
