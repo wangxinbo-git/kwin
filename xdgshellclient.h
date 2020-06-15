@@ -280,18 +280,13 @@ public:
     QSize followsParentSize() const;
     quint32 followsParentSerial() const;
 
-Q_SIGNALS:
-    /**
-     * This signal is emitted when the XdgPopupClient is repositioned.
-     */
-    void repositioned();
-
 protected:
     bool acceptsFocus() const override;
     XdgSurfaceConfigure *sendRoleConfigure() const override;
 
 private:
     void handleGrabRequested(KWaylandServer::SeatInterface *seat, quint32 serial);
+    void reposition(KWaylandServer::XdgPositioner positioner, quint32 token);
     void initialize();
 
     KWaylandServer::XdgPopupInterface *m_shellSurface;
