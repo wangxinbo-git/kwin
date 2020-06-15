@@ -113,36 +113,6 @@ XdgSurfaceClient::XdgSurfaceClient(XdgSurfaceInterface *shellSurface)
 
     connect(this, &XdgSurfaceClient::frameGeometryChanged,
             this, &XdgSurfaceClient::updateGeometryRestoreHack);
-    connect(this, &XdgSurfaceClient::frameGeometryChanged,
-            this, &XdgSurfaceClient::handleBoundPopups);
-}
-
-void XdgSurfaceClient::handleBoundPopups()
-{
-    auto popups = m_boundPopups;
-    QList<QPointer<XdgPopupClient>> used;
-    for (auto popup : popups) {
-        if (used.contains(popup)) {
-            continue;
-        } else {
-            used << popup;
-        }
-        if (popup == nullptr) {
-            m_boundPopups.removeAll(popup);
-            continue;
-        }
-        popup->relayout();
-    }
-}
-
-void XdgSurfaceClient::bindPopup(XdgPopupClient* client)
-{
-    m_boundPopups << client;
-}
-
-void XdgSurfaceClient::unbindPopup(XdgPopupClient* client)
-{
-    m_boundPopups.removeAll(client);
 }
 
 XdgSurfaceClient::~XdgSurfaceClient()
@@ -1887,11 +1857,8 @@ void XdgPopupClient::handlePositionerBindings()
 {
     auto parent = qobject_cast<XdgSurfaceClient*>(transientFor());
     if (parent) {
-        if (m_shellSurface->positioner().reactive()) {
-            parent->bindPopup(this);
-        } else {
-            parent->unbindPopup(this);
-        }
+        connect(parent, &XdgSurfaceClient::geometryChanged,
+                this, &XdgPopupClient::relayout, Qt::UniqueConnection);
     }
 }
 

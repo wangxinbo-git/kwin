@@ -56,7 +56,6 @@ public:
     qreal serial;
 };
 
-class XdgPopupClient;
 
 class XdgSurfaceClient : public WaylandClient
 {
@@ -86,8 +85,6 @@ public:
     QSize requestedClientSize() const;
     QRect clientGeometry() const;
     bool isHidden() const;
-    void bindPopup(XdgPopupClient *client);
-    void unbindPopup(XdgPopupClient *client);
 
     virtual void installPlasmaShellSurface(KWaylandServer::PlasmaShellSurfaceInterface *shellSurface) = 0;
 
@@ -120,13 +117,11 @@ private:
     void internalHide();
     void cleanGrouping();
     void cleanTabBox();
-    void handleBoundPopups();
 
     KWaylandServer::XdgSurfaceInterface *m_shellSurface;
     QTimer *m_configureTimer;
     QQueue<XdgSurfaceConfigure *> m_configureEvents;
     QScopedPointer<XdgSurfaceConfigure> m_lastAcknowledgedConfigure;
-    QList<QPointer<XdgPopupClient>> m_boundPopups;
     QRect m_windowGeometry;
     QRect m_requestedFrameGeometry;
     QRect m_bufferGeometry;
