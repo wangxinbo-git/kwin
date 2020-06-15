@@ -1856,7 +1856,7 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
 void XdgPopupClient::handlePositionerBindings()
 {
     auto parent = qobject_cast<XdgSurfaceClient*>(transientFor());
-    if (parent) {
+    if (parent && m_shellSurface->positioner().reactive()) {
         connect(parent, &XdgSurfaceClient::geometryChanged,
                 this, &XdgPopupClient::relayout, Qt::UniqueConnection);
     }
