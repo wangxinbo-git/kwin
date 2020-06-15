@@ -1908,7 +1908,7 @@ void XdgPopupClient::relayout()
     if (!frameGeometry().isEmpty()) {
         GeometryUpdatesBlocker blocker(this);
         Placement::self()->place(this, frameGeometry());
-        m_shellSurface->sendConfigure(frameGeometry());
+        sendRoleConfigure();
     }
 }
 
