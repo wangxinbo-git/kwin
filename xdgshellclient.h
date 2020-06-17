@@ -56,7 +56,6 @@ public:
     qreal serial;
 };
 
-
 class XdgSurfaceClient : public WaylandClient
 {
     Q_OBJECT
