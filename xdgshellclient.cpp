@@ -1844,9 +1844,8 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
 
 void XdgPopupClient::handlePositionerBindings()
 {
-    auto parent = qobject_cast<XdgSurfaceClient*>(transientFor());
-    if (parent && m_shellSurface->positioner().reactive()) {
-        connect(parent, &XdgSurfaceClient::geometryChanged,
+    if (transientFor() && m_shellSurface->positioner().reactive()) {
+        connect(transientFor(), &AbstractClient::geometryChanged,
                 this, &XdgPopupClient::relayout, Qt::UniqueConnection);
     }
 }
@@ -1861,26 +1860,9 @@ void XdgPopupClient::reposition(XdgPositioner positioner, quint32 token)
 
 void XdgPopupClient::relayout()
 {
-    if (!frameGeometry().isEmpty()) {
-        GeometryUpdatesBlocker blocker(this);
-        Placement::self()->place(this, frameGeometry());
-        sendRoleConfigure();
-    }
-}
-
-bool XdgPopupClient::followsParent() const
-{
-    return m_shellSurface->positioner().reactive();
-}
-
-quint32 XdgPopupClient::followsParentSerial() const
-{
-    return m_shellSurface->positioner().parentConfigure();
-}
-
-QSize XdgPopupClient::followsParentSize() const
-{
-    return m_shellSurface->positioner().parentSize();
+    GeometryUpdatesBlocker blocker(this);
+    Placement::self()->place(this, QRect());
+    sendRoleConfigure();
 }
 
 XdgPopupClient::~XdgPopupClient()
