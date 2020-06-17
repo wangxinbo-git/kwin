@@ -1826,7 +1826,7 @@ XdgPopupClient::XdgPopupClient(XdgPopupInterface *shellSurface)
             this, &XdgPopupClient::handleGrabRequested);
     connect(shellSurface, &XdgPopupInterface::initializeRequested,
             this, &XdgPopupClient::initialize);
-    connect(shellSurface, &XdgPopupInterface::popupRepositionRequested,
+    connect(shellSurface, &XdgPopupInterface::repositionRequested,
             this, &XdgPopupClient::reposition);
     connect(shellSurface, &XdgPopupInterface::destroyed,
             this, &XdgPopupClient::destroyClient);
