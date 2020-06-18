@@ -1847,6 +1847,9 @@ void XdgPopupClient::handlePositionerBindings()
     if (m_shellSurface->positioner().reactive()) {
         connect(transientFor(), &AbstractClient::frameGeometryChanged,
                 this, &XdgPopupClient::relayout, Qt::UniqueConnection);
+    } else {
+        disconnect(transientFor(), &AbstractClient::frameGeometryChanged,
+                this, &XdgPopupClient::relayout);
     }
 }
 
