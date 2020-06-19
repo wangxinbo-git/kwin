@@ -280,6 +280,7 @@ public:
     QSize followsParentSize() const;
     quint32 followsParentSerial() const;
     void relayout();
+    bool stateCompare() const override;
 
 protected:
     bool acceptsFocus() const override;
@@ -293,6 +294,7 @@ private:
 
     KWaylandServer::XdgPopupInterface *m_shellSurface;
     bool m_haveExplicitGrab = false;
+    mutable bool m_pendingRelayout = false;
 };
 
 } // namespace KWin

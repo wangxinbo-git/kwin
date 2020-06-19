@@ -1872,11 +1872,21 @@ void XdgPopupClient::reposition(XdgPositioner positioner, quint32 token)
     relayout();
 }
 
+bool XdgPopupClient::stateCompare() const
+{
+    if (m_pendingRelayout) {
+        m_pendingRelayout = false;
+        return true;
+    }
+    return XdgSurfaceClient::stateCompare();
+}
+
 void XdgPopupClient::relayout()
 {
     GeometryUpdatesBlocker blocker(this);
     Placement::self()->place(this, QRect());
-    sendRoleConfigure();
+    m_pendingRelayout = true;
+    scheduleConfigure();
 }
 
 XdgPopupClient::~XdgPopupClient()
