@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "screens.h"
 #include "wayland_server.h"
 #include "workspace.h"
+#include "xdgshellclient.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/Decoration>
@@ -48,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <KWaylandServer/clientconnection.h>
 #include <KWaylandServer/display.h>
+#include <KWaylandServer/xdgshell_interface.h>
 
 #include <QDBusConnection>
 
@@ -120,9 +122,43 @@ private Q_SLOTS:
     void testXdgWindowGeometryInteractiveResize();
     void testXdgWindowGeometryFullScreen();
     void testXdgWindowGeometryMaximize();
+    void testXdgWindowRepositioning();
     void testPointerInputTransform();
     void testReentrantSetFrameGeometry();
 };
+
+void TestXdgShellClient::testXdgWindowRepositioning()
+{
+    QScopedPointer<Surface> rootSurface(Test::createSurface());
+    QScopedPointer<XdgShellSurface> rootShellSurface(Test::createXdgShellStableSurface(rootSurface.data()));
+
+
+    auto positioner = XdgPositioner(QSize(10, 10), QRect(10, 10, 10, 10));
+    auto differentPositioner = KWaylandServer::XdgPositioner(/* uh the heck do i do for this boi */);
+
+    QScopedPointer<Surface> childSurface(Test::createSurface());
+    QScopedPointer<XdgShellPopup> childShellPopup(Test::createXdgShellStablePopup(childSurface.data(), rootShellSurface.data(), positioner));
+
+    QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
+    QVERIFY(clientAddedSpy.isValid());
+
+    rootSurface->commit(Surface::CommitFlag::None);
+    childSurface->commit(Surface::CommitFlag::None);
+
+    QVERIFY(clientAddedSpy.wait());
+    QCOMPARE(clientAddedSpy.count(), 2);
+
+    auto client = clientAddedSpy.last().first().value<XdgPopupClient*>();
+
+    QSignalSpy configureSpy(childShellPopup, &XdgShellPopup::configureRequested);
+    QVERIFY(configureSpy.isValid());
+
+    client->reposition(differentPositioner, 500000);
+
+    // todo: probably gotta add stuff to kwayland too for this
+    QVERIFY(configureSpy.wait());
+    QCOMPARE(configureSpy.count(), 1);
+}
 
 void TestXdgShellClient::initTestCase()
 {
