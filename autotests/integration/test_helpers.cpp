@@ -84,6 +84,11 @@ static struct {
     XdgDecorationManager *xdgDecoration = nullptr;
 } s_waylandConnection;
 
+xdg_wm_base* getXdgWmBase()
+{
+    return *s_waylandConnection.xdgShellStable;
+}
+
 bool setupWaylandConnection(AdditionalWaylandInterfaces flags)
 {
     if (s_waylandConnection.connection) {
