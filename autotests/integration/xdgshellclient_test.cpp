@@ -125,8 +125,8 @@ private Q_SLOTS:
     void testXdgWindowGeometryInteractiveResize();
     void testXdgWindowGeometryFullScreen();
     void testXdgWindowGeometryMaximize();
-    void testXdgWindowRepositioning();
     void testXdgWindowReactive();
+    void testXdgWindowRepositioning();
     void testPointerInputTransform();
     void testReentrantSetFrameGeometry();
 };
@@ -154,28 +154,29 @@ void TestXdgShellClient::testXdgWindowReactive()
 
     QScopedPointer<Surface> rootSurface(Test::createSurface());
     QScopedPointer<Surface> childSurface(Test::createSurface());
+
     auto root = QtWayland::xdg_surface(wmBase.get_xdg_surface(rootSurface.data()->operator wl_surface*()));
+    auto toplevel = QtWayland::xdg_toplevel(root.get_toplevel());
+    Q_UNUSED(toplevel)
+
     auto child = QtWayland::xdg_surface(wmBase.get_xdg_surface(childSurface.data()->operator wl_surface*()));
     auto popup = new TestXdgPopup(root.get_popup(child.object(), positioner.object()));
+
     auto deferred = qScopeGuard([popup](){ delete popup; });
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
-    QVERIFY(clientAddedSpy.isValid());
+    auto rootClient = Test::renderAndWaitForShown(rootSurface.data(), QSize(50, 50), Qt::cyan);
+    auto childClient = Test::renderAndWaitForShown(childSurface.data(), QSize(10, 10), Qt::cyan);
 
-    rootSurface->commit(Surface::CommitFlag::None);
-    childSurface->commit(Surface::CommitFlag::None);
+    QVERIFY(rootClient);
+    QVERIFY(childClient);
 
-    QVERIFY(clientAddedSpy.wait());
-    QCOMPARE(clientAddedSpy.count(), 2);
+    QSignalSpy moveSpy(childClient, &AbstractClient::geometryChanged);
+    QVERIFY(moveSpy.isValid());
 
-    QSignalSpy reconfigureSpy(qobject_cast<QObject*>(popup), SIGNAL(configureRequested(QRect, quint32)));
-    QVERIFY(reconfigureSpy.isValid());
+    rootClient->move(rootClient->x()+20, rootClient->y()+20);
 
-    auto client = clientAddedSpy.first().last().value<AbstractClient*>();
-    client->move(client->x()+20, client->y()+20);
-
-    QVERIFY(reconfigureSpy.wait());
-    QCOMPARE(reconfigureSpy.count(), 1);
+    QVERIFY(moveSpy.wait());
+    QCOMPARE(moveSpy.count(), 1);
 }
 
 void TestXdgShellClient::testXdgWindowRepositioning()
@@ -197,14 +198,11 @@ void TestXdgShellClient::testXdgWindowRepositioning()
     auto popup = new TestXdgPopup(root.get_popup(child.object(), positioner.object()));
     auto deferred = qScopeGuard([popup](){ delete popup; });
 
-    QSignalSpy clientAddedSpy(workspace(), &Workspace::clientAdded);
-    QVERIFY(clientAddedSpy.isValid());
+    auto rootClient = Test::renderAndWaitForShown(rootSurface.data(), QSize(100, 100), Qt::cyan);
+    auto childClient = Test::renderAndWaitForShown(childSurface.data(), QSize(10, 10), Qt::cyan);
 
-    rootSurface->commit(Surface::CommitFlag::None);
-    childSurface->commit(Surface::CommitFlag::None);
-
-    QVERIFY(clientAddedSpy.wait());
-    QCOMPARE(clientAddedSpy.count(), 2);
+    QVERIFY(rootClient);
+    QVERIFY(childClient);
 
     QSignalSpy reconfigureSpy(qobject_cast<QObject*>(popup), SIGNAL(configureRequested(QRect, quint32)));
     QVERIFY(reconfigureSpy.isValid());
