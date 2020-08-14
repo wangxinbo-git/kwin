@@ -1,23 +1,12 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    KWin - the KDE window manager
+    This file is part of the KDE project.
 
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
-Copyright (C) 2020 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2019 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2020 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #ifndef KWIN_XWL_XWAYLAND
 #define KWIN_XWL_XWAYLAND
 
@@ -32,15 +21,12 @@ class ApplicationWaylandAbstract;
 
 namespace Xwl
 {
-class DataBridge;
 
 class Xwayland : public XwaylandInterface
 {
     Q_OBJECT
 
 public:
-    static Xwayland *self();
-
     Xwayland(ApplicationWaylandAbstract *app, QObject *parent = nullptr);
     ~Xwayland() override;
 
@@ -104,7 +90,6 @@ private:
     int m_displayFileDescriptor = -1;
     int m_xcbConnectionFd = -1;
     QProcess *m_xwaylandProcess = nullptr;
-    DataBridge *m_dataBridge = nullptr;
     QSocketNotifier *m_socketNotifier = nullptr;
     ApplicationWaylandAbstract *m_app;
 

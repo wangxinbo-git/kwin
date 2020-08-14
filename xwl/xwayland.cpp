@@ -1,24 +1,13 @@
-/********************************************************************
- KWin - the KDE window manager
- This file is part of the KDE project.
+/*
+    KWin - the KDE window manager
+    This file is part of the KDE project.
 
-Copyright 2014 Martin Gräßlin <mgraesslin@kde.org>
-Copyright 2019 Roman Gilg <subdiff@gmail.com>
-Copyright (C) 2020 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
+    SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
+    SPDX-FileCopyrightText: 2019 Roman Gilg <subdiff@gmail.com>
+    SPDX-FileCopyrightText: 2020 Vlad Zahorodnii <vlad.zahorodnii@kde.org>
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*********************************************************************/
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 #include "xwayland.h"
 #include "databridge.h"
 
@@ -71,24 +60,15 @@ namespace KWin
 namespace Xwl
 {
 
-Xwayland *s_self = nullptr;
-
-Xwayland *Xwayland::self()
-{
-    return s_self;
-}
-
 Xwayland::Xwayland(ApplicationWaylandAbstract *app, QObject *parent)
     : XwaylandInterface(parent)
     , m_app(app)
 {
-    s_self = this;
 }
 
 Xwayland::~Xwayland()
 {
     stop();
-    s_self = nullptr;
 }
 
 QProcess *Xwayland::process() const
@@ -163,8 +143,7 @@ void Xwayland::stop()
     // events will be dispatched before blocking; otherwise we will simply hang...
     uninstallSocketNotifier();
 
-    delete m_dataBridge;
-    m_dataBridge = nullptr;
+    DataBridge::destroy();
 
     destroyX11Connection();
 
@@ -198,10 +177,6 @@ void Xwayland::dispatchEvents()
     }
 
     while (xcb_generic_event_t *event = xcb_poll_for_event(connection)) {
-        if (m_dataBridge->filterEvent(event)) {
-            free(event);
-            continue;
-        }
         long result = 0;
         QAbstractEventDispatcher *dispatcher = QCoreApplication::eventDispatcher();
         dispatcher->filterNativeEvent(QByteArrayLiteral("xcb_generic_event_t"), event, &result);
@@ -336,7 +311,7 @@ void Xwayland::continueStartupWithX()
     KSelectionOwner owner("WM_S0", xcbConn, m_app->x11RootWindow());
     owner.claim(true);
 
-    m_dataBridge = new DataBridge;
+    DataBridge::create(this);
 
     auto env = m_app->processStartupEnvironment();
     env.insert(QStringLiteral("DISPLAY"), QString::fromUtf8(qgetenv("DISPLAY")));
@@ -349,10 +324,11 @@ void Xwayland::continueStartupWithX()
 
 DragEventReply Xwayland::dragMoveFilter(Toplevel *target, const QPoint &pos)
 {
-    if (!m_dataBridge) {
+    DataBridge *bridge = DataBridge::self();
+    if (!bridge) {
         return DragEventReply::Wayland;
     }
-    return m_dataBridge->dragMoveFilter(target, pos);
+    return bridge->dragMoveFilter(target, pos);
 }
 
 } // namespace Xwl
