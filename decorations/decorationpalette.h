@@ -41,6 +41,18 @@ private:
     QString m_colorScheme;
     QFileSystemWatcher m_watcher;
 
+    struct {
+        QColor activeTitleBarColor;
+        QColor inactiveTitleBarColor;
+
+        QColor activeFrameColor;
+        QColor inactiveFrameColor;
+
+        QColor activeForegroundColor;
+        QColor inactiveForegroundColor;
+        QColor warningForegroundColor;
+    } m_legacyPalette;
+    bool m_useLegacy = false;
     KSharedConfig::Ptr m_colorSchemeConfig;
 
     QPalette m_palette;
