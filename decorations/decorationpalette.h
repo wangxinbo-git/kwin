@@ -16,6 +16,9 @@
 #include <QFileSystemWatcher>
 #include <QPalette>
 #include <KSharedConfig>
+#include <KColorScheme>
+
+#include <optional>
 
 namespace KWin
 {
@@ -41,7 +44,9 @@ private:
     QString m_colorScheme;
     QFileSystemWatcher m_watcher;
 
-    struct {
+    struct LegacyPalette {
+        QPalette palette;
+
         QColor activeTitleBarColor;
         QColor inactiveTitleBarColor;
 
@@ -51,11 +56,17 @@ private:
         QColor activeForegroundColor;
         QColor inactiveForegroundColor;
         QColor warningForegroundColor;
-    } m_legacyPalette;
-    bool m_useLegacy = false;
+    };
+
+    struct ModernPalette {
+        KColorScheme active;
+        KColorScheme inactive;
+    };
+
+    std::optional<LegacyPalette> m_legacyPalette;
     KSharedConfig::Ptr m_colorSchemeConfig;
 
-    QPalette m_palette;
+    ModernPalette m_palette;
 };
 
 }
