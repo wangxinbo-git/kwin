@@ -17,6 +17,7 @@
 #include <QPalette>
 #include <KSharedConfig>
 #include <KColorScheme>
+#include <KConfigWatcher>
 
 #include <optional>
 
@@ -42,7 +43,7 @@ private:
     void update();
 
     QString m_colorScheme;
-    QFileSystemWatcher m_watcher;
+    KConfigWatcher::Ptr m_watcher;
 
     struct LegacyPalette {
         QPalette palette;

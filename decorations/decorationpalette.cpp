@@ -5,6 +5,7 @@
     SPDX-FileCopyrightText: 2014 Martin Gräßlin <mgraesslin@kde.org>
     SPDX-FileCopyrightText: 2014 Hugo Pereira Da Costa <hugo.pereira@free.fr>
     SPDX-FileCopyrightText: 2015 Mika Allan Rauhala <mika.allan.rauhala@gmail.com>
+    SPDX-FileCopyrightText: 2020 Carson Black <uhhadd@gmail.com>
 
     SPDX-License-Identifier: GPL-2.0-or-later
 */
@@ -39,12 +40,11 @@ DecorationPalette::DecorationPalette(const QString &colorScheme)
 
         m_colorScheme = QStandardPaths::locate(QStandardPaths::GenericConfigLocation, colorScheme);
     }
-    m_watcher.addPath(m_colorScheme);
-    connect(&m_watcher, &QFileSystemWatcher::fileChanged, [this]() {
-        m_watcher.addPath(m_colorScheme);
-        update();
-        emit changed();
-    });
+
+    m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
+    m_watcher = KConfigWatcher::create(m_colorSchemeConfig);
+
+    connect(m_watcher.data(), &KConfigWatcher::configChanged, this, &DecorationPalette::update);
 
     update();
 }
@@ -137,10 +137,8 @@ QPalette DecorationPalette::palette() const
 
 void DecorationPalette::update()
 {
-    m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
     if (!KColorScheme::isColorSetSupported(m_colorSchemeConfig, KColorScheme::Header)) {
-        auto config = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
-        KConfigGroup wmConfig(config, QStringLiteral("WM"));
+        KConfigGroup wmConfig(m_colorSchemeConfig, QStringLiteral("WM"));
 
         if (!wmConfig.exists() && !m_colorScheme.endsWith(QStringLiteral("/kdeglobals"))) {
             qCWarning(KWIN_DECORATIONS) << "Invalid color scheme" << m_colorScheme << "lacks WM group";
@@ -148,7 +146,7 @@ void DecorationPalette::update()
         }
 
         m_legacyPalette = LegacyPalette{};
-        m_legacyPalette->palette = KColorScheme::createApplicationPalette(config);
+        m_legacyPalette->palette = KColorScheme::createApplicationPalette(m_colorSchemeConfig);
         m_legacyPalette->activeFrameColor        = wmConfig.readEntry("frame", m_legacyPalette->palette.color(QPalette::Active, QPalette::Window));
         m_legacyPalette->inactiveFrameColor      = wmConfig.readEntry("inactiveFrame", m_legacyPalette->activeFrameColor);
         m_legacyPalette->activeTitleBarColor     = wmConfig.readEntry("activeBackground", m_legacyPalette->palette.color(QPalette::Active, QPalette::Highlight));
@@ -156,7 +154,7 @@ void DecorationPalette::update()
         m_legacyPalette->activeForegroundColor   = wmConfig.readEntry("activeForeground", m_legacyPalette->palette.color(QPalette::Active, QPalette::HighlightedText));
         m_legacyPalette->inactiveForegroundColor = wmConfig.readEntry("inactiveForeground", m_legacyPalette->activeForegroundColor.darker());
 
-        KConfigGroup windowColorsConfig(config, QStringLiteral("Colors:Window"));
+        KConfigGroup windowColorsConfig(m_colorSchemeConfig, QStringLiteral("Colors:Window"));
         m_legacyPalette->warningForegroundColor = windowColorsConfig.readEntry("ForegroundNegative", QColor(237, 21, 2));
     } else {
         m_palette.active = KColorScheme(QPalette::Normal, KColorScheme::Header, m_colorSchemeConfig);
