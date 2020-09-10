@@ -29,7 +29,11 @@ namespace Decoration
 DecorationPalette::DecorationPalette(const QString &colorScheme)
     : m_colorScheme(colorScheme != QStringLiteral("kdeglobals") ? colorScheme : QString() )
 {
-    m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
+    if (m_colorScheme.isEmpty()) {
+        m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::FullConfig);
+    } else {
+        m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
+    }
     m_watcher = KConfigWatcher::create(m_colorSchemeConfig);
 
     connect(m_watcher.data(), &KConfigWatcher::configChanged, this, &DecorationPalette::update);
@@ -153,6 +157,8 @@ void DecorationPalette::update()
         m_palette.inactive = KColorScheme(QPalette::Inactive, KColorScheme::Header, m_colorSchemeConfig);
         m_legacyPalette.reset();
     }
+
+    Q_EMIT changed();
 }
 
 }
