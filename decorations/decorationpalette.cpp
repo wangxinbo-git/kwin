@@ -27,20 +27,8 @@ namespace Decoration
 {
 
 DecorationPalette::DecorationPalette(const QString &colorScheme)
-    : m_colorScheme(QFileInfo(colorScheme).isAbsolute()
-                    ? colorScheme
-                    : QStandardPaths::locate(QStandardPaths::GenericConfigLocation, colorScheme))
+    : m_colorScheme(colorScheme != QStringLiteral("kdeglobals") ? colorScheme : QString() )
 {
-    if (!m_colorScheme.startsWith(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)) && colorScheme == QStringLiteral("kdeglobals")) {
-        // kdeglobals doesn't exist so create it. This is needed to monitor it using QFileSystemWatcher.
-        auto config = KSharedConfig::openConfig(colorScheme, KConfig::SimpleConfig);
-        KConfigGroup wmConfig(config, QStringLiteral("WM"));
-        wmConfig.writeEntry("FakeEntryToKeepThisGroup", true);
-        config->sync();
-
-        m_colorScheme = QStandardPaths::locate(QStandardPaths::GenericConfigLocation, colorScheme);
-    }
-
     m_colorSchemeConfig = KSharedConfig::openConfig(m_colorScheme, KConfig::SimpleConfig);
     m_watcher = KConfigWatcher::create(m_colorSchemeConfig);
 
@@ -137,11 +125,15 @@ QPalette DecorationPalette::palette() const
 
 void DecorationPalette::update()
 {
+    m_colorSchemeConfig->sync();
+
     if (!KColorScheme::isColorSetSupported(m_colorSchemeConfig, KColorScheme::Header)) {
         KConfigGroup wmConfig(m_colorSchemeConfig, QStringLiteral("WM"));
 
-        if (!wmConfig.exists() && !m_colorScheme.endsWith(QStringLiteral("/kdeglobals"))) {
-            qCWarning(KWIN_DECORATIONS) << "Invalid color scheme" << m_colorScheme << "lacks WM group";
+        if (!wmConfig.exists()) {
+            m_palette.active = KColorScheme(QPalette::Normal, KColorScheme::Header, m_colorSchemeConfig);
+            m_palette.inactive = KColorScheme(QPalette::Inactive, KColorScheme::Header, m_colorSchemeConfig);
+            m_legacyPalette.reset();
             return;
         }
 
